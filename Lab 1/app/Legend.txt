@@ -1,0 +1,4 @@
+Description of the resulting table Result.csv:
+    regName - area of passing the external examination (ZNO)
+    year - year of passing the exam
+    physMinBall100 - the minimum score in the current region of Ukraine
