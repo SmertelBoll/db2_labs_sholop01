@@ -12,8 +12,7 @@ def connect_bd():
     print('Try connect with DB')
     for _ in range(20):
         try:
-            # connect = psycopg2.connect(dbname='zno_db', user='postgres', password='postgres', host='db')
-            connect = psycopg2.connect(user='sholop01_lab2', password='21132113', dbname='sholop01_lab2_DB')
+            connect = psycopg2.connect(dbname='zno_db', user='postgres', password='postgres', host='db')
             print('Connect successful\n')
             return connect
         except:
@@ -106,7 +105,9 @@ def create_table(col_names):
     cursor.execute('ALTER TABLE zno ADD COLUMN IF NOT EXISTS year int')
 
     for col in col_names:
-        if 'ball' in col or 'scale' in col or 'birth' in col:
+        if 'ball100' in col:
+            cursor.execute('ALTER TABLE zno ADD COLUMN IF NOT EXISTS %s float' % col)
+        elif 'ball' in col or 'scale' in col or 'birth' in col:
             cursor.execute('ALTER TABLE zno ADD COLUMN IF NOT EXISTS %s int' % col)
         else:
             cursor.execute('ALTER TABLE zno ADD COLUMN IF NOT EXISTS %s text' % col)
@@ -169,11 +170,15 @@ def fill_table(year, file, col_names, index_year):
             el = el.replace('"', '')  # удаляємо зайві лапки
             # якщо елемент не null
             if el != 'null':
-                # це цифра
+                # це число
                 if 'ball' in col_names[index_year[el_id]] or \
                         'scale' in col_names[index_year[el_id]] or \
                         'birth' in col_names[index_year[el_id]]:
-                    el = int(el.split(',')[0])  # оскільки в нас немає значень float відкидаємо якщо вони появляються
+
+                    if ',' in el:  # число типу float
+                        el = float(el.replace(',', '.'))
+                    else:           # число типу int
+                        el = int(el)
 
                 not_null_col_names.append(col_names[index_year[el_id]])
                 not_null_col_values.append(el)
