@@ -150,6 +150,8 @@ def fill_table(year, file, col_names, index_year):
     for count, line in enumerate(file):
         if count < ind:
             continue
+        if count > 1000:
+            break
 
         if ind % 1000 == 0 and ind != 0 and count >= ind:
             print(f"{ind} rows loaded")
@@ -224,7 +226,7 @@ def main():
     start = int(time.time())
 
     # Загружаємо файли
-    download_files([2020, 2021])
+    # download_files([2020, 2021])
 
     # Відкриваємо файли
     f_20 = open(r'Odata2020File.csv', 'r', encoding='Windows-1251')
@@ -234,7 +236,7 @@ def main():
     column_names, index_20, index_21 = get_column_names_and_indexes(f_20, f_21)
 
     # Удалимо таблицю якщо вона інує
-    # delete_table()
+    delete_table()
 
     # Створюємо таблицю
     create_table(column_names)

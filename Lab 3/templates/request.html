@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>My Table</title>
+	<style>
+		table, th, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		}
+		th, td {
+			padding: 5px;
+			text-align: left;
+		}
+	</style>
+</head>
+<body>
+    <form method="GET" action="/data">
+      <label for="year-select">Choose a year:</label>
+
+      <select id="year-select" name="year">
+        <option value="2020" {% if selected_year == "2020" %}selected{% endif %}>2020</option>
+        <option value="2021" {% if selected_year == "2021" %}selected{% endif %}>2021</option>
+      </select>
+
+      <label for="subject-select">Choose a subject:</label>
+
+      <select id="subject-select" name="subject">
+        <option value="umlball100" {% if selected_subject == "umlball100" %}selected{% endif %}>uml</option>
+        <option value="ukrball100" {% if selected_subject == 'ukrball100' %}selected{% endif %}>ukr</option>
+        <option value="histball100"{% if selected_subject == 'histball100' %}selected{% endif %}>hist</option>
+        <option value="mathball100"{% if selected_subject == 'mathball100' %}selected{% endif %}>math</option>
+        <option value="physball100"{% if selected_subject == 'physball100' %}selected{% endif %}>phys</option>
+        <option value="chemball100"{% if selected_subject == 'chemball100' %}selected{% endif %}>chem</option>
+        <option value="bioball100"{% if selected_subject == 'bioball100' %}selected{% endif %}>bio</option>
+        <option value="geoball100"{% if selected_subject == 'geoball100' %}selected{% endif %}>geo</option>
+        <option value="engball100"{% if selected_subject == 'engball100' %}selected{% endif %}>eng</option>
+        <option value="fraball100" {% if selected_subject == 'fraball100' %}selected{% endif %}>fra</option>
+        <option value="deuball100" {% if selected_subject == 'deuball100' %}selected{% endif %}>deu</option>
+        <option value="spaball100" {% if selected_subject == 'spaball100' %}selected{% endif %}>spa</option>
+      </select>
+
+      <label for="region-select">Choose a region:</label>
+
+      <select id="region-select" name="region">
+        {% for reg in regs %}
+        <option value={{reg}} {% if selected_region == reg %}selected{% endif %}>{{reg}}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          {% for column in columns %}
+            <th>{{ column }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for key, value in row.items() %}
+              <td>
+                {{ value }}
+              </td>
+            {% endfor %}
+
+
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+</body>
+</html>
