@@ -14,7 +14,19 @@
 	</style>
 </head>
 <body>
-	<form id="add-row-form" action="{{ url_for('add_row') }}" method="POST">
+    <form method="GET" action="javascript:void(0)" onsubmit="submitForm()">
+        <label for="table-select">Choose a table:</label>
+
+        <select id="table-select" name="table">
+          {% for table in tables %}
+          <option value="{{ table }}" {% if current_table == table %}selected{% endif %}>{{ table }}</option>
+          {% endfor %}
+        </select>
+
+        <button type="submit">Submit</button>
+    <form/>
+    <form id="add-row-form" action="{{ url_for('add_row') }}" method="POST">
+        <input type="hidden" class="update-input" name="table" value="{{ current_table }}">
     <table>
       <thead>
         <tr>
@@ -58,8 +70,8 @@
 			  var submitCell = newRow.insertCell();
               submitCell.innerHTML = '<button type="button" onclick="submitRow(this)">Submit</button>';
 
-			}
-             function submitRow(button) {
+		}
+         function submitRow(button) {
               // Отримати дані з полів вводу
               var row = button.parentNode.parentNode;
               var inputs = row.querySelectorAll('input');
@@ -67,6 +79,16 @@
               for (var i = 0; i < inputs.length; i++) {
                 data[inputs[i].name] = inputs[i].value;
               }
+
+              // Додавання назви таблиці
+              var url = new URL(window.location.href);
+
+              // Отримати об'єкт URLSearchParams з параметрами URL
+              var params = new URLSearchParams(url.search);
+
+              // Отримати значення параметра "table"
+              var table = params.get('table') || 'znotable';
+              data['table'] = table;
 
               // Відправити дані на сервер
               fetch('/add_row', {
@@ -88,7 +110,7 @@
               .catch(function(error) {
                 console.error('Network error:', error);
               });
-          }
+         }
 		// Додати обробник події на кнопку "Add Row"
 		document.getElementById('add-row-btn').addEventListener('click', addRow);
 
@@ -109,6 +131,15 @@
           for (let input of inputs) {
             data[input.name] = input.value;
           }
+          // Додавання назви таблиці
+          var url = new URL(window.location.href);
+
+          // Отримати об'єкт URLSearchParams з параметрами URL
+          var params = new URLSearchParams(url.search);
+
+          // Отримати значення параметра "table"
+          var table = params.get('table') || 'znotable';
+          data['table'] = table;
 
           // Відправити дані на сервер
           fetch('/update_row', {
@@ -133,7 +164,6 @@
 
 
 
-
         // Додати обробник події на кнопку "Delete"
         document.addEventListener('click', function(event) {
           if (event.target && event.target.classList.contains('delete-row-btn')) {
@@ -149,6 +179,15 @@
           for (let input of inputs) {
             data[input.name] = input.value;
           }
+          // Додавання назви таблиці
+          var url = new URL(window.location.href);
+
+          // Отримати об'єкт URLSearchParams з параметрами URL
+          var params = new URLSearchParams(url.search);
+
+          // Отримати значення параметра "table"
+          var table = params.get('table') || 'znotable';
+          data['table'] = table;
 
           // Відправити дані на сервер
           fetch('/delete_row', {
@@ -164,19 +203,16 @@
                 location.reload();
               }
             });
-
-<!--          .then(response => response.json())-->
-<!--          .then(data => {-->
-<!--            console.log('Success:', data);-->
-<!--            // Оновити дані в рядку таблиці-->
-<!--            for (let key in data) {-->
-<!--              row.querySelector(`[name="${key}"]`).value = data[key];-->
-<!--            }-->
-<!--          })-->
-<!--          .catch((error) => {-->
-<!--            console.error('Error:', error);-->
-<!--          });-->
         }
+
+
+
+        function submitForm() {
+        var selectedTable = document.getElementById('table-select').value;
+        var url = window.location.pathname + '?table=' + encodeURIComponent(selectedTable);
+        window.location.href = url;
+    }
+
 
 
 	</script>

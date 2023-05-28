@@ -4,4 +4,5 @@ py7zr==0.20.4
 flask==2.2.4
 flask_sqlalchemy==3.0.3
 flask_migrate==4.0.4
+redis
 

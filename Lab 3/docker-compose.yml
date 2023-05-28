@@ -1,7 +1,9 @@
 version: '3.7.4'
 services:
   app:
-    build: ./app/
+    build:
+      context: ./app/
+      dockerfile: Dockerfile.app
     depends_on:
       - db
     networks:
@@ -23,7 +25,9 @@ services:
       - mynet
 
   migrate:
-    build: ./app/
+    build:
+      context: ./app/
+      dockerfile: Dockerfile.app
     depends_on:
       - db
     environment:
@@ -31,6 +35,28 @@ services:
       FLASK_APP: "app.py"
       FLASK_ENV: "development"
     command: "flask db upgrade"
+    networks:
+      - mynet
+
+  web:
+    build:
+      context: ./app/
+      dockerfile: Dockerfile.web
+    depends_on:
+      - db
+    environment:
+      PYTHONUNBUFFERED: 1
+      FLASK_APP: "front.py"
+      FLASK_ENV: "development"
+    ports:
+      - '5000:5000'
+    networks:
+      - mynet
+
+  redis:
+    image: redis:latest
+    ports:
+      - '6379:6379'
     networks:
       - mynet
 
