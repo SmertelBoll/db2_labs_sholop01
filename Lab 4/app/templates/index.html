@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>My Table</title>
+	<style>
+		table, th, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		}
+		th, td {
+			padding: 5px;
+			text-align: left;
+		}
+	</style>
+</head>
+<body>
+    <form method="GET" action="javascript:void(0)" onsubmit="submitForm()">
+        <label for="table-select">Choose a table:</label>
+
+        <select id="table-select" name="table">
+          {% for table in tables %}
+          <option value="{{ table }}" {% if current_table == table %}selected{% endif %}>{{ table }}</option>
+          {% endfor %}
+        </select>
+
+        <button type="submit">Submit</button>
+    <form/>
+    <form id="add-row-form" action="{{ url_for('add_row') }}" method="POST">
+        <input type="hidden" class="update-input" name="table" value="{{ current_table }}">
+    <table>
+      <thead>
+        <tr>
+          {% for column in columns %}
+            <th>{{ column }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for key, value in row.items() %}
+              <td>
+                <input type="text" class="update-input" name="{{ key }}" value="{{ value }}">
+              </td>
+            {% endfor %}
+              <td>
+                <button type="button" class="delete-row-btn">Delete</button>
+              </td>
+              <td>
+                  <button type="button" class="save-row-btn">Save</button>
+              </td>
+
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="button" id="add-row-btn">Add Row</button>
+  </form>
+	<script>
+		function addRow() {
+			  var table = document.getElementsByTagName('table')[0];
+			  var newRow = table.insertRow(table.rows.length);
+
+			  {% for column in columns %}
+				var newCell = newRow.insertCell({{ loop.index0 }});
+				newCell.innerHTML = '<input type="text" name="{{ column }}" />';
+			  {% endfor %}
+
+			  // Додати кнопку для відправлення даних
+			  var submitCell = newRow.insertCell();
+              submitCell.innerHTML = '<button type="button" onclick="submitRow(this)">Submit</button>';
+
+		}
+         function submitRow(button) {
+              // Отримати дані з полів вводу
+              var row = button.parentNode.parentNode;
+              var inputs = row.querySelectorAll('input');
+              var data = {};
+              for (var i = 0; i < inputs.length; i++) {
+                data[inputs[i].name] = inputs[i].value;
+              }
+
+              // Додавання назви таблиці
+              var url = new URL(window.location.href);
+
+              // Отримати об'єкт URLSearchParams з параметрами URL
+              var params = new URLSearchParams(url.search);
+
+              // Отримати значення параметра "table"
+              var table = params.get('table') || 'znotable';
+              data['table'] = table;
+
+              // Відправити дані на сервер
+              fetch('/add_row', {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              })
+              .then(function(response) {
+                if (response.ok) {
+                  // Оновити таблицю після успішного додавання рядка
+                  window.location.reload();
+                } else {
+                  // Обробити помилку
+                  console.error('Server returned error:', response.statusText);
+                }
+              })
+              .catch(function(error) {
+                console.error('Network error:', error);
+              });
+         }
+		// Додати обробник події на кнопку "Add Row"
+		document.getElementById('add-row-btn').addEventListener('click', addRow);
+
+
+
+        // Додати обробник події на кнопку "Save"
+        document.addEventListener('click', function(event) {
+          if (event.target && event.target.classList.contains('save-row-btn')) {
+            saveRow(event.target.closest('tr'));
+          }
+        });
+
+        // Функція для відправлення даних на сервер
+        function saveRow(row) {
+          // Отримати дані з полів вводу
+          const inputs = row.querySelectorAll('.update-input');
+          const data = {};
+          for (let input of inputs) {
+            data[input.name] = input.value;
+          }
+          // Додавання назви таблиці
+          var url = new URL(window.location.href);
+
+          // Отримати об'єкт URLSearchParams з параметрами URL
+          var params = new URLSearchParams(url.search);
+
+          // Отримати значення параметра "table"
+          var table = params.get('table') || 'znotable';
+          data['table'] = table;
+
+          // Відправити дані на сервер
+          fetch('/update_row', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Success:', data);
+            // Оновити дані в рядку таблиці
+            for (let key in data) {
+              row.querySelector(`[name="${key}"]`).value = data[key];
+            }
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
+        }
+
+
+
+        // Додати обробник події на кнопку "Delete"
+        document.addEventListener('click', function(event) {
+          if (event.target && event.target.classList.contains('delete-row-btn')) {
+            deleteRow(event.target.closest('tr'));
+          }
+        });
+
+        // Функція для відправлення даних на сервер
+        function deleteRow(row) {
+          // Отримати дані з полів вводу
+          const inputs = row.querySelectorAll('.update-input');
+          const data = {};
+          for (let input of inputs) {
+            data[input.name] = input.value;
+          }
+          // Додавання назви таблиці
+          var url = new URL(window.location.href);
+
+          // Отримати об'єкт URLSearchParams з параметрами URL
+          var params = new URLSearchParams(url.search);
+
+          // Отримати значення параметра "table"
+          var table = params.get('table') || 'znotable';
+          data['table'] = table;
+
+          // Відправити дані на сервер
+          fetch('/delete_row', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => {
+              if (response.ok) {
+                // Оновити таблицю
+                location.reload();
+              }
+            });
+        }
+
+
+
+        function submitForm() {
+        var selectedTable = document.getElementById('table-select').value;
+        var url = window.location.pathname + '?table=' + encodeURIComponent(selectedTable);
+        window.location.href = url;
+    }
+
+
+
+	</script>
+</body>
+</html>
