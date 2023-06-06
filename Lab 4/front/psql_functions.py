@@ -6,11 +6,11 @@ import redis
 import json
 
 # 'postgresql+psycopg2://user:password@hostname/database_name'
-#engine = create_engine("postgresql+psycopg2://postgres:root1@localhost/student01_DB")
-engine = create_engine("postgresql+psycopg2://postgres:root1@db/student01_DB")
+engine = create_engine("postgresql+psycopg2://postgres:root1@localhost/student01_DB")
+#engine = create_engine("postgresql+psycopg2://postgres:root1@db/student01_DB")
 
 
-r = redis.Redis(host='redis', port=6379)
+#r = redis.Redis(host='redis', port=6379)
 
 
 Session = sessionmaker(bind=engine)
@@ -43,6 +43,10 @@ class Config:
         return conn.execute(query)
 
 
+    def fetchLocationsColumnNames(self):
+        return Locations.__table__.columns.keys()
+
+
     def fetchLocationsById(self, location_id):
         query = session.query(Locations).filter(Locations.location_id == location_id)
         return query.first()
@@ -70,19 +74,19 @@ class Config:
             session.commit()
 
 
-    def createLocation(self, location_id, regname, areaname, tername, tertypename):
-        location = Locations(regname=regname, areaname=areaname, tername=tername, tertypename=tertypename)
+    def createLocation(self, location_data):
+        location = Locations(**location_data)
         session.add(location)
         session.commit()
 
 
-    def updateLocation(self, location_id, regname, areaname, tername, tertypename):
+    def updateLocation(self, location_id, location_data):
         location = self.fetchLocationsById(location_id)
         if location:
-            location.regname = regname
-            location.areaname = areaname
-            location.tername = tername
-            location.tertypename = tertypename
+            for column_name, value in location_data.items():
+                if value == 'None':
+                    value = None
+                setattr(location, column_name, value)
             session.commit()
 
 
@@ -96,31 +100,32 @@ class Config:
         return conn.execute(query)
 
 
-    def fetchStudentById(self, student_id):
-        query = session.query(Students).filter(Students.student_id == student_id)
+    def fetchStudentsColumnNames(self):
+        return Students.__table__.columns.keys()
+
+
+    def fetchStudentById(self, outid):
+        query = session.query(Students).filter(Students.outid == outid)
         return query.first()
 
 
-    def createStudent(self, student_id, year_of_passing, outid, birth, sextypename, location_id, eo_id, tests_results_id):
-        student = Students(year_of_passing=year_of_passing, outid=outid, birth=birth, sextypename=sextypename,
-                           location_id=location_id, eo_id=eo_id, tests_results_id=tests_results_id)
+    def createStudent(self, student_data):
+        student = Students(**student_data)
         session.add(student)
         session.commit()
 
 
-    def updateStudent(self, student_id, year_of_passing, outid, birth, sextypename, location_id, eo_id, tests_results_id):
-        student = self.fetchStudentById(student_id)
+    def updateStudent(self, outid, student_data):
+        student = self.fetchStudentById(outid)
         if student:
-            student.year_of_passing = year_of_passing
-            student.outid = outid
-            student.birth = birth
-            student.sextypename = sextypename
-            student.location_id = location_id
-            student.eo_id = eo_id
-            student.tests_results_id = tests_results_id
+            for column_name, value in student_data.items():
+                if value == 'None':
+                    value = None
+                setattr(student, column_name, value)
             session.commit()
 
-    def deleteStudent(self,outid):
+
+    def deleteStudent(self, outid):
         student = self.fetchStudentById(outid)
         if student:
             session.delete(student)
@@ -135,6 +140,10 @@ class Config:
     def fetchRowsFromEO(self):
         query = select(EO).order_by(EO.eo_id).limit(10)
         return conn.execute(query)
+
+
+    def fetchEOColumnNames(self):
+        return EO.__table__.columns.keys()
 
 
     def fetchEOById(self, eo_id):
@@ -158,17 +167,19 @@ class Config:
             session.commit()
 
 
-    def createEO(self, eo_id, eo_name, eo_type, location_id):
-        eo = EO(eo_name=eo_name, eo_type=eo_type, location_id=location_id)
+    def createEO(self, eo_data):
+        eo= EO(**eo_data)
         session.add(eo)
         session.commit()
 
-    def updateEO(self, eo_id, eo_name, eo_type, location_id):
+
+    def updateEO(self, eo_id, eo_data):
         eo = self.fetchEOById(eo_id)
         if eo:
-            eo.eo_name = eo_name
-            eo.eo_type = eo_type
-            eo.location_id = location_id
+            for column_name, value in eo_data.items():
+                if value == 'None':
+                    value = None
+                setattr(eo, column_name, value)
             session.commit()
 
 
@@ -201,8 +212,8 @@ class Config:
             session.commit()
 
 
-    def deleteTest(self, student_id):
-        test = self.fetchTest(student_id)
+    def deleteTest(self, tests_id):
+        test = self.fetchTest(tests_id)
         if test:
             session.delete(test)
             session.commit()
@@ -220,14 +231,14 @@ class Config:
 
 
     def fetchGrade(self, year, regname, subject, function):
-        cache_key = f"grade:{year}:{regname}:{subject}:{function}"
+        #cache_key = f"grade:{year}:{regname}:{subject}:{function}"
 
         # Перевірка, чи дані є в кеші
-        cached_result = r.get(cache_key)
+        #cached_result = r.get(cache_key)
 
-        if cached_result is not None:
+        #if cached_result is not None:
             # Повернення результату з кешу
-            return json.loads(cached_result)
+            #return json.loads(cached_result)
 
         if regname != "м.Київ":
             regname += " область"
@@ -252,10 +263,10 @@ class Config:
         grade = 0
         if len(query.all()) != 0:
             grade = query.all()[0][2]
-            r.setex(cache_key, 7200, float(grade))
+            #r.setex(cache_key, 7200, float(grade))
             return grade
 
-        r.setex(cache_key, 7200, float(grade))
+        #r.setex(cache_key, 7200, float(grade))
         return grade
 
 

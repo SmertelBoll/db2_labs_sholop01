@@ -4,15 +4,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from pymongo import MongoClient
 
-from SQLA_config import Students, Locations, EO, Tests
+from psql_functions import Students, Locations, EO, Tests
 
-#mongo_client = MongoClient('mongodb://localhost:27017/')
-mongo_client = MongoClient('mongodb://mongodb:27017/')
+mongo_client = MongoClient('mongodb://localhost:27017/')
+#mongo_client = MongoClient('mongodb://mongodb:27017/')
 
 db = mongo_client.student01_DB
 
-#psql_engine = create_engine("postgresql+psycopg2://postgres:root1@localhost/student01_DB")
-psql_engine = create_engine("postgresql+psycopg2://postgres:root1@db/student01_DB")
+psql_engine = create_engine("postgresql+psycopg2://postgres:root1@localhost/student01_DB")
+#psql_engine = create_engine("postgresql+psycopg2://postgres:root1@db/student01_DB")
 Session = sessionmaker(bind=psql_engine)
 session = Session()
 
@@ -117,6 +117,12 @@ class Config:
         return result
 
 
+    def fetchLocationsColumnNames(self):
+        column_names = list(locations_collection.find_one().keys())
+        column_names.remove('_id')
+        return column_names
+
+
     def fetchLocationsById(self, location_id):
         query = locations_collection.find_one(
             {"location_id": location_id},
@@ -148,29 +154,20 @@ class Config:
             locations_collection.delete_one({"location_id": location_id})
 
 
-    def updateLocation(self, location_id, regname, areaname, tername, tertypename):
+    def updateLocation(self, location_id, location_data):
         location_id = int(location_id)
         location = locations_collection.find_one({"location_id": location_id})
         if location:
-            update_query = {
-                "$set": {
-                    "regname": regname,
-                    "areaname": areaname,
-                    "tername": tername,
-                    "tertypename": tertypename
-                }
-            }
+            update_query = {"$set": {}}
+            for column_name, value in location_data.items():
+                if column_name != "location_id":
+                    if value == 'None':
+                        value = None
+                    update_query["$set"][column_name] = value
             locations_collection.update_one({"location_id": location_id}, update_query)
 
 
-    def createLocation(self, location_id, regname, areaname, tername, tertypename):
-        location_data = {
-            "location_id": location_id,
-            "regname": regname,
-            "areaname": areaname,
-            "tername": tername,
-            "tertypename": tertypename
-        }
+    def createLocation(self, location_data):
         locations_collection.insert_one(location_data)
 
 
@@ -184,6 +181,12 @@ class Config:
         query = students_collection.find({}, {"_id": 0}).sort("student_id").limit(10)
         result = self.listOfDictsToTuple(query)
         return result
+
+
+    def fetchStudentsColumnNames(self):
+        column_names = list(students_collection.find_one().keys())
+        column_names.remove('_id')
+        return column_names
 
 
     def fetchStudentsById(self, students_id):
@@ -200,36 +203,20 @@ class Config:
             students_collection.delete_one({"outid": outid})
 
 
-    def createStudent(self, student_id, year_of_passing, outid, birth, sextypename, location_id, eo_id, tests_results_id):
-        student_data = {
-            "student_id": student_id,
-            "year_of_passing": year_of_passing,
-            "outid": outid,
-            "birth": birth,
-            "sextypename": sextypename,
-            "location_id": location_id,
-            "eo_id": eo_id,
-            "tests_results_id": tests_results_id
-        }
+    def createStudent(self, student_data):
         students_collection.insert_one(student_data)
 
 
-    def updateStudent(self, student_id, year_of_passing, outid, birth, sextypename, location_id, eo_id, tests_results_id):
-        student_id = int(student_id)
-        student = students_collection.find_one({"student_id": student_id})
+    def updateStudent(self, outid, student_data):
+        student = students_collection.find_one({"outid": outid})
         if student:
-            update_query = {
-                "$set": {
-                    "year_of_passing": year_of_passing,
-                    "outid": outid,
-                    "birth": birth,
-                    "sextypename": sextypename,
-                    "location_id": location_id,
-                    "eo_id": eo_id,
-                    "tests_results_id": tests_results_id
-                }
-            }
-            students_collection.update_one({"student_id": student_id}, update_query)
+            update_query = {"$set": {}}
+            for column_name, value in student_data.items():
+                if column_name != "student_id":
+                    if value == 'None':
+                        value = None
+                    update_query["$set"][column_name] = value
+            students_collection.update_one({"outid": outid}, update_query)
 
 
 
@@ -244,6 +231,12 @@ class Config:
         return result
 
 
+    def fetchEOColumnNames(self):
+        column_names = list(eo_collection.find_one().keys())
+        column_names.remove('_id')
+        return column_names
+
+
     def fetchEOById(self, eo_id):
         query = eo_collection.find_one(
             {"eo_id": eo_id},
@@ -252,13 +245,7 @@ class Config:
         return self.dictValuesToTuple(query)
 
 
-    def createEO(self, eo_id, eo_name, eo_type, location_id):
-        eo_data = {
-            "eo_id": eo_id,
-            "eo_name": eo_name,
-            "eo_type": eo_type,
-            "location_id": location_id
-        }
+    def createEO(self, eo_data):
         eo_collection.insert_one(eo_data)
 
 
@@ -269,17 +256,16 @@ class Config:
             eo_collection.delete_one({"eo_id": eo_id})
 
 
-    def updateEO(self, eo_id, eo_name, eo_type, location_id):
+    def updateEO(self, eo_id, eo_data):
         eo_id = int(eo_id)
         eo = eo_collection.find_one({"eo_id": eo_id})
         if eo:
-            update_query = {
-                "$set": {
-                    "eo_name": eo_name,
-                    "eo_type": eo_type,
-                    "location_id": location_id
-                }
-            }
+            update_query = {"$set": {}}
+            for column_name, value in eo_data.items():
+                if column_name != "eo_id":
+                    if value == 'None':
+                        value = None
+                    update_query["$set"][column_name] = value
             eo_collection.update_one({"eo_id": eo_id}, update_query)
 
 
